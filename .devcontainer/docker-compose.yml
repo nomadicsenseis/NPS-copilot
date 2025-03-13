@@ -1,0 +1,43 @@
+version: '3.8'
+
+services:
+  app:
+    build:
+      context: ..
+      dockerfile: .devcontainer/Dockerfile
+    env_file:
+      - .env
+    volumes:
+      - ../..:/workspaces:cached
+    command: sleep infinity
+    # Add this to connect to your host network
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    ports:
+      - "11434:11434"  # For Ollama
+    # Add a network for container communication
+    networks:
+      - default
+
+  openwebui:
+    image: ghcr.io/open-webui/open-webui:main
+    container_name: open-webui
+    restart: unless-stopped
+    environment:
+      - OLLAMA_API_BASE_URL=http://localhost:11434/api
+      - WEBUI_AUTH=false
+    depends_on:
+      - app
+    volumes:
+      - open-webui-data:/app/backend/data
+    ports:
+      - "8080:8080"  # For accessing the UI
+    networks:
+      - default
+
+volumes:
+  open-webui-data:
+
+networks:
+  default:
+    driver: bridge
